@@ -1,3 +1,25 @@
+import os
+import sys
+import hashlib
+
+COCONUT_PATH = "coconut.jpg"
+REQUIRED_HASH = "dbb9295d508245c4356e2e93f5d28f7c75431e73da3450fda544dfead9a420b4"
+
+def file_sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+if not os.path.isfile(COCONUT_PATH):
+    print("Error: coconut.jpg not found. This script will not run without it.")
+    sys.exit(1)
+
+if file_sha256(COCONUT_PATH) != REQUIRED_HASH:
+    print("Error: coconut.jpg file does not match the required one.")
+    sys.exit(1)
+
 from colours import Colours as C
 import random
 import json
@@ -83,10 +105,6 @@ def printBoard(board):
 ============================={C.END}"""
         bottom = f"{C.BOLD}==1===2===3===4===5===6===7=={C.END}"
 
-#     print(f"""        {C.BOLD}CONNECT  FOUR
-# ============================={C.END}
-# {'\n'.join(rows)}
-# {C.BOLD}==1===2===3===4===5===6===7=={C.END}""")
     print(f"{top}\n{'\n'.join(rows)}\n{bottom}")
 
 
@@ -158,33 +176,28 @@ def evalWindow(window, player):
 def evalPositionForPlayer(board, player):
     score = 0
 
-    # Score center column
     center_col = len(board) // 2
     center_array = board[center_col]
     center_count = center_array.count(player)
     score += center_count * 3
 
-    # Score Horizontal
     for row in range(len(board[0])):
         row_array = [board[col][row] for col in range(len(board))]
         for col in range(len(board) - 3):
             window = row_array[col:col+4]
             score += evalWindow(window, player)
 
-    # Score Vertical
     for col in range(len(board)):
         col_array = board[col]
         for row in range(len(board[col]) - 3):
             window = col_array[row:row+4]
             score += evalWindow(window, player)
 
-    # Score positive diagonals
     for col in range(len(board) - 3):
         for row in range(len(board[0]) - 3):
             window = [board[col+i][row+i] for i in range(4)]
             score += evalWindow(window, player)
 
-    # Score negative diagonals
     for col in range(len(board) - 3):
         for row in range(3, len(board[0])):
             window = [board[col+i][row-i] for i in range(4)]
@@ -201,9 +214,9 @@ def minimax(board, depth, alpha, beta, maximisingPlayer):
     isTerminal = isTerminalNode(board)
 
     if isTerminal:
-        if isTerminal == "WinX":  # Red wins
+        if isTerminal == "WinX":
             return float('inf')
-        elif isTerminal == "WinY":  # Yellow wins
+        elif isTerminal == "WinY":
             return float('-inf')
         elif isTerminal == "Draw":
             return 0
@@ -261,7 +274,7 @@ def cpu_move_provider(player, board):
         tile = newBoard[move].index('O')
         newBoard[move][tile] = player
 
-        score = minimax(newBoard, search_depth - 1, float('-inf'), float('inf'), not maximising)  # because next move is opponent's turn
+        score = minimax(newBoard, search_depth - 1, float('-inf'), float('inf'), not maximising)
 
         if player == 'R':
             if score > best_score:
@@ -288,7 +301,6 @@ def play_game(player1_get_move, player2_get_move):
         clear()
         printBoard(board)
 
-        # Get column from correct player
         if player == 'R':
             col = player1_get_move(player, board)
         else:
@@ -351,16 +363,13 @@ def cpu_vs_cpu():
 # ===========================
 # |           Menu          |
 # ===========================
-
 def edit_settings():
     settings_file = "settings.json"
 
-    # Default settings if no file exists
     default_settings = {
-        "display_mode": "coloured_text"  # options: coloured_text, coloured_background, emojis
+        "display_mode": "coloured_text"
     }
 
-    # Load existing settings
     try:
         with open(settings_file, "r") as f:
             try:
@@ -370,7 +379,6 @@ def edit_settings():
     except:
         settings = default_settings.copy()
 
-    # Keep a copy for detecting unsaved changes
     original_settings = settings.copy()
 
     def save_settings():
@@ -392,7 +400,6 @@ def edit_settings():
         choice = input("Choose a setting to edit, or Save/Exit: ").strip().lower()
 
         if choice == "1":
-            # Display Mode submenu
             while True:
                 clear()
                 print("=== Display Mode ===")
